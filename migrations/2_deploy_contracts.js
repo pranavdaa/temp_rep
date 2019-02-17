@@ -1,5 +1,9 @@
 var EcommerceStore = artifacts.require("./EcommerceStore.sol");
+const get3rdAccount = async () => {
+  const accounts = await web3.eth.getAccounts()
+  return accounts[3]
+}
 
 module.exports = function(deployer) {
-  deployer.deploy(EcommerceStore,'0x8604f3d63c27dffa9a908641add497df976aa714' );
+  deployer.deploy(EcommerceStore, get3rdAccount());
 };

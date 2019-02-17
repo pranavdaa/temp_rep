@@ -5,7 +5,7 @@ import "../stylesheets/app.css";
 import { default as Web3} from 'web3';
 import { default as contract } from 'truffle-contract'
 
-const ipfsAPI = require('ipfs-api');
+const ipfsAPI = require('ipfs-http-client');
 const ipfs = ipfsAPI({host: '127.0.0.1', port: '5001', protocol: 'http'});
 
 // Import our contract artifacts and turn them into usable abstractions.
@@ -13,6 +13,11 @@ import ecommerce_store_artifacts from '../../build/contracts/EcommerceStore.json
 
 // MetaCoin is our usable abstraction, which we'll use through the code below.
 var EcommerceStore = contract(ecommerce_store_artifacts);
+
+const get3rdAccount = async () => {
+  const accounts = await web3.eth.getAccounts()
+  return accounts[3]
+}
 
 var reader;
 
@@ -55,7 +60,7 @@ window.App = {
       var sendAmount = $("#buy-now-price").val();
       var productId = $("#product-id").val();
       EcommerceStore.deployed().then(function(f) {
-        f.buy(productId, {value: web3.toWei(0.6, 'ether'), from: web3.eth.accounts[0]}).then(function(f) {
+        f.buy(productId, {value: web3.utils.toWei(0.6, 'ether'), from: get3rdAccount()}).then(function(f) { //chnage
           $("#msg").show();
           $("#msg").html("You have successfully purchased the product!");
         });
@@ -68,7 +73,7 @@ window.App = {
       EcommerceStore.deployed().then(function(f) {
         $("#msg").html("Your transaction has been submitted. Please wait for few seconds for the confirmation").show();
         console.log(productId);
-        f.releaseAmountToSeller(productId, {from: web3.eth.accounts[0]}).then(function(f) {
+        f.releaseAmountToSeller(productId, {from: get3rdAccount()}).then(function(f) {
           console.log(f);
           location.reload();
         }).catch(function(e) {
@@ -82,7 +87,7 @@ window.App = {
       EcommerceStore.deployed().then(function(f) {
         $("#msg").html("Your transaction has been submitted. Please wait for few seconds for the confirmation").show();
         console.log(productId);
-        f.refundAmountToBuyer(productId, {from: web3.eth.accounts[0]}).then(function(f) {
+        f.refundAmountToBuyer(productId, {from: get3rdAccount()}).then(function(f) {
           console.log(f);
           location.reload();
         }).catch(function(e) {
@@ -134,7 +139,7 @@ function renderProductDetails(productId) {
           $("#release-count").html(i[4].toNumber());
           $("#refund-count").html(i[5].toNumber());
         });
-      }      
+      }
     });
   })
 }
@@ -143,7 +148,7 @@ function saveProduct(product) {
   // 1. Upload image to IPFS and get the hash
   // 2. Add description to IPFS and get the hash
   // 3. Pass the 2 hashes to addProductToStore
-  
+
   var imageId;
   var descId;
   saveImageOnIpfs(reader).then(function(id) {
@@ -153,7 +158,7 @@ function saveProduct(product) {
       EcommerceStore.deployed().then(function(f) {
         return f.addProductToStore(product["product-name"], product["product-category"], imageId,
             descId, Date.parse(product["product-start-time"]) / 1000,
-          web3.toWei(product["product-price"], 'ether'), product["product-condition"], {from: web3.eth.accounts[0], gas: 4700000});
+          web3.utils.toWei(product["product-price"], 'ether'), product["product-condition"], {from: get3rdAccount(), gas: 4700000});
       }).then(function(f) {
         alert("Product added to store!");
       });
@@ -190,7 +195,7 @@ function saveTextBlobOnIpfs(blob) {
 }
 
 function renderStore() {
-  // Get the product count 
+  // Get the product count
   // Loop through and fetch all products by id
   /*var instance;
   return EcommerceStore.deployed().then(function(f) {
@@ -256,7 +261,7 @@ function renderProduct(product) {
 }
 
 function displayPrice(amt) {
-  return "&Xi;" + web3.fromWei(amt, 'ether');
+  return "&Xi;" + web3.utils.fromWei(amt, 'ether'); //chnage
 }
 
 window.addEventListener('load', function() {
